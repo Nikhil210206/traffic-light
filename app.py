@@ -25,10 +25,8 @@ def main():
             st.sidebar.image(img_rgb_display, caption="Uploaded Image")
 
             if st.sidebar.button("Detect Traffic Lights"):
-                # Get both the frame and the state
                 result_img, light_state = detect_traffic_lights(img.copy())
                 
-                # Display the command based on the state
                 if light_state == "Red":
                     status_placeholder.error("🔴 STOP")
                 elif light_state == "Yellow":
@@ -41,49 +39,69 @@ def main():
                 result_img_rgb = cv2.cvtColor(result_img, cv2.COLOR_BGR2RGB)
                 st.image(result_img_rgb, caption="Processed Image")
 
-    elif source == "Video" or source == "Webcam":
-        run = True
-        if source == "Webcam":
-            run = st.sidebar.checkbox('Run Webcam', value=True)
-            cap = cv2.VideoCapture(0)
-        else: # Video
-            uploaded_file = st.sidebar.file_uploader("Choose a video...", type=["mp4", "avi", "mov"])
-            if uploaded_file:
-                tfile = tempfile.NamedTemporaryFile(delete=False)
-                tfile.write(uploaded_file.read())
-                cap = cv2.VideoCapture(tfile.name)
-            else:
-                run = False
-        
-        FRAME_WINDOW = st.image([])
-        
-        while run and 'cap' in locals() and cap.isOpened():
-            ret, frame = cap.read()
-            if not ret:
-                st.warning("Video finished or failed to capture frame.")
-                break
+    elif source == "Video":
+        uploaded_file = st.sidebar.file_uploader("Choose a video...", type=["mp4", "avi", "mov"])
+        if uploaded_file is not None:
+            tfile = tempfile.NamedTemporaryFile(delete=False)
+            tfile.write(uploaded_file.read())
+            cap = cv2.VideoCapture(tfile.name)
+            FRAME_WINDOW = st.image([])
             
-            # Get both the frame and the state
-            processed_frame, light_state = detect_traffic_lights(frame.copy())
-            
-            # Display the command based on the state
-            if light_state == "Red":
-                status_placeholder.error("🔴 STOP")
-            elif light_state == "Yellow":
-                status_placeholder.warning("🟡 GET READY")
-            elif light_state == "Green":
-                status_placeholder.success("🟢 GO!")
-            else:
-                status_placeholder.info("⚪ No light detected")
+            while cap.isOpened():
+                ret, frame = cap.read()
+                if not ret:
+                    st.warning("Video finished.")
+                    break
                 
-            processed_frame_rgb = cv2.cvtColor(processed_frame, cv2.COLOR_BGR2RGB)
-            FRAME_WINDOW.image(processed_frame_rgb)
-        
-        if not run and source == "Webcam":
-            st.write('Webcam is stopped.')
-        
-        if 'cap' in locals() and cap.isOpened():
+                processed_frame, light_state = detect_traffic_lights(frame.copy())
+                
+                if light_state == "Red":
+                    status_placeholder.error("🔴 STOP")
+                elif light_state == "Yellow":
+                    status_placeholder.warning("🟡 GET READY")
+                elif light_state == "Green":
+                    status_placeholder.success("🟢 GO!")
+                else:
+                    status_placeholder.info("⚪ No light detected")
+                    
+                processed_frame_rgb = cv2.cvtColor(processed_frame, cv2.COLOR_BGR2RGB)
+                FRAME_WINDOW.image(processed_frame_rgb)
+            
             cap.release()
+
+    elif source == "Webcam":
+        run = st.sidebar.checkbox('Run Webcam', value=True)
+        FRAME_WINDOW = st.image([])
+        cap = cv2.VideoCapture(0)
+
+        if not cap.isOpened():
+            st.error("Error: Could not open webcam. Please grant camera permissions and refresh.")
+        else:
+            while run:
+                ret, frame = cap.read()
+                if not ret:
+                    st.error("Failed to capture frame from webcam. Please refresh.")
+                    break
+                
+                processed_frame, light_state = detect_traffic_lights(frame.copy())
+
+                if light_state == "Red":
+                    status_placeholder.error("🔴 STOP")
+                elif light_state == "Yellow":
+                    status_placeholder.warning("🟡 GET READY")
+                elif light_state == "Green":
+                    status_placeholder.success("🟢 GO!")
+                else:
+                    status_placeholder.info("⚪ No light detected")
+                
+                processed_frame_rgb = cv2.cvtColor(processed_frame, cv2.COLOR_BGR2RGB)
+                FRAME_WINDOW.image(processed_frame_rgb)
+            
+            # Release the camera when the loop is done
+            cap.release()
+            if not run:
+                 st.write('Webcam stopped.')
+
 
 if __name__ == "__main__":
     main()
