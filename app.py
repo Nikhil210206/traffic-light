@@ -18,11 +18,16 @@ def main():
             file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
             img = cv2.imdecode(file_bytes, 1)
             
-            st.sidebar.image(img, channels="BGR", caption="Uploaded Image")
+            # Display original image correctly
+            img_rgb_display = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) # <-- FIX
+            st.sidebar.image(img_rgb_display, caption="Uploaded Image")
 
             if st.sidebar.button("Detect Traffic Lights"):
+                # Process the BGR image
                 result_img = detect_traffic_lights(img.copy())
-                st.image(result_img, channels="BGR", caption="Processed Image")
+                # Convert the final result to RGB for display
+                result_img_rgb = cv2.cvtColor(result_img, cv2.COLOR_BGR2RGB) # <-- FIX
+                st.image(result_img_rgb, caption="Processed Image")
 
     elif source == "Video":
         uploaded_file = st.sidebar.file_uploader("Choose a video...", type=["mp4", "avi", "mov"])
@@ -34,12 +39,15 @@ def main():
             st_frame = st.empty()
 
             while cap.isOpened():
-                ret, frame = cap.read()
+                ret, frame = cap.read() # Frame is in BGR
                 if not ret:
                     break
                 
+                # Process the BGR frame
                 processed_frame = detect_traffic_lights(frame.copy())
-                st_frame.image(processed_frame, channels="BGR")
+                # Convert the final processed frame to RGB for display
+                processed_frame_rgb = cv2.cvtColor(processed_frame, cv2.COLOR_BGR2RGB) # <-- FIX
+                st_frame.image(processed_frame_rgb)
             
             cap.release()
 
@@ -51,14 +59,16 @@ def main():
         cap = cv2.VideoCapture(0)
 
         while run:
-            ret, frame = cap.read()
+            ret, frame = cap.read() # Frame is in BGR
             if not ret:
                 st.error("Failed to capture image from webcam.")
                 break
             
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            # Process the original BGR frame
             processed_frame = detect_traffic_lights(frame.copy())
-            FRAME_WINDOW.image(processed_frame)
+            # Convert the final result to RGB for display
+            processed_frame_rgb = cv2.cvtColor(processed_frame, cv2.COLOR_BGR2RGB) # <-- FIX
+            FRAME_WINDOW.image(processed_frame_rgb)
         else:
             st.write('Webcam is stopped.')
             cap.release()

@@ -5,8 +5,8 @@ from utils import draw_label
 # Define HSV ranges for Red, Yellow, Green
 # Note: Red has two ranges to wrap around the hue spectrum
 COLOR_RANGES = {
-    "Red":    [((0, 100, 100), (10, 255, 255)), ((160, 100, 100), (180, 255, 255))],
-    "Yellow": [((20, 100, 100), (40, 255, 255))],
+    "Red":    [((0, 120, 70), (10, 255, 255)), ((170, 120, 70), (180, 255, 255))],
+    "Yellow": [((20, 100, 100), (30, 255, 255))],
     "Green":  [((40, 70, 70), (90, 255, 255))]
 }
 
@@ -42,7 +42,7 @@ def detect_traffic_lights(frame):
                 x, y, w, h = cv2.boundingRect(cnt)
                 aspect_ratio = w / float(h)
                 # Add a simple shape constraint, traffic lights are often close to circular or square
-                if 0.7 <= aspect_ratio <= 1.3:
+                if 0.8 <= aspect_ratio <= 1.2:
                     draw_label(frame, color_name, x, y, w, h, COLOR_BGR[color_name])
 
     return frame
